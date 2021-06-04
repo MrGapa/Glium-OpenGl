@@ -33,8 +33,11 @@ fn main() {
 
         in vec2 position;
         uniform mat4 matrix;
+        
+        out vec2 my_atrr;
 
         void main(){
+            my_atrr = position;
             gl_Position = matrix * vec4(position, 0.0, 1.0);
         }
     "#;
@@ -42,10 +45,11 @@ fn main() {
     let fragment_shader_src = r#"
         #version 140
 
+        in vec2 my_atrr;
         out vec4 color;
 
         void main(){
-            color = vec4(1.0, 0.0, 0.0, 1.0);
+            color = vec4(my_atrr, 0.3, 1.0);
         }
     "#;
 
