@@ -31,9 +31,12 @@ fn main() {
         #version 140
 
         in vec2 position;
+        uniform float t;
 
         void main(){
-            gl_Position = vec4(position, 0.0, 1.0);
+            vec2 pos = position;
+            pos.x += t;
+            gl_Position = vec4(pos, 0.0, 1.0);
         }
     "#;
 
@@ -49,19 +52,9 @@ fn main() {
 
     let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
 
+    let mut t: f32 = -0.5;
+
     event_loop.run(move |ev,_, control_flow|{
-        let next_frame_time = std::time::Instant::now() + std::time::Duration::from_nanos(16_666_67);
-
-        let mut target = display.draw();
-
-        target.clear_color(0.0, 0.0, 1.0, 1.0);
-        // Draw here
-        target.draw(&vertex_buffer, &indices, &program, &glium::uniforms::EmptyUniforms, &Default::default()).unwrap();
-
-        target.finish().unwrap();
-
-
-        *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
         match ev {
             glutin::event::Event::WindowEvent { event, .. } => match event {
                 glutin::event::WindowEvent::CloseRequested => {
@@ -70,7 +63,30 @@ fn main() {
                 },
                 _=> return,
             },
-            _ => ()
+            glutin::event::Event::NewEvents(cause) => match cause {
+                glutin::event::StartCause::ResumeTimeReached { .. } => (),
+                glutin::event::StartCause::Init => (),
+                _ => return,
+            },
+            _ => return,
         }
+
+        let next_frame_time = std::time::Instant::now() + std::time::Duration::from_nanos(16_666_67);
+
+        let mut target = display.draw();
+
+        *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
+
+        t += 0.0002;
+        if t > 0.5{
+            t = -0.5;
+        } 
+
+        target.clear_color(0.0, 0.0, 1.0, 1.0);
+        
+        target.draw(&vertex_buffer, &indices, &program, &uniform! {t: t}, &Default::default()).unwrap();
+
+        target.finish().unwrap();
+
     });
 }
