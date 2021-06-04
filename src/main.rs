@@ -27,16 +27,15 @@ fn main() {
     let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
+    // If vec4 * matrix it will rotate in the other direction
     let vertex_shader_src = r#"
         #version 140
 
         in vec2 position;
-        uniform float t;
+        uniform mat4 matrix;
 
         void main(){
-            vec2 pos = position;
-            pos.x += t;
-            gl_Position = vec4(pos, 0.0, 1.0);
+            gl_Position = matrix * vec4(position, 0.0, 1.0);
         }
     "#;
 
@@ -82,9 +81,18 @@ fn main() {
             t = -0.5;
         } 
 
+        let uniforms = uniform! {
+            matrix: [
+                [t.cos(),t.sin(),0.0,0.0],
+                [-t.sin(),t.cos(),0.0,0.0],
+                [0.0,0.0,1.0,0.0],
+                [0.0,0.0,0.0,1.0f32],
+            ]
+        };
+
         target.clear_color(0.0, 0.0, 1.0, 1.0);
         
-        target.draw(&vertex_buffer, &indices, &program, &uniform! {t: t}, &Default::default()).unwrap();
+        target.draw(&vertex_buffer, &indices, &program, &uniforms, &Default::default()).unwrap();
 
         target.finish().unwrap();
 
